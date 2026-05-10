@@ -6,10 +6,19 @@ import com.embabel.agent.api.annotation.Agent;
 import com.embabel.agent.api.common.Ai;
 import com.embabel.agent.domain.io.UserInput;
 
-@Agent(description = "Write and review the blog post about a given topic")
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+@Agent(description = "Write and review a blog post about a given topic")
 public class BlogWriterAgent {
 
-    @Action(description = "Write a first blog draft of blog post")
+    private final BlogAgentProperties properties;
+
+    public BlogWriterAgent(BlogAgentProperties properties) {
+        this.properties = properties;
+    }
+
+    @Action(description = "Write a first draft of the blog post")
     public BlogDraft writeDraft (UserInput input, Ai ai){
         return ai
                 .withDefaultLlm()
@@ -26,7 +35,7 @@ public class BlogWriterAgent {
                         """.formatted(input.getContent()));
     }
 
-    @AchievesGoal(description = "A reviewed and polished blog post")
+    @AchievesGoal(description = "A reviewed and polished blog post saved to file")
     @Action(description = "Review and improve draft")
     public ReviewedPost reviewPost (BlogDraft blogDraft, Ai ai) {
 
@@ -45,6 +54,31 @@ public class BlogWriterAgent {
                         summary of the changes you made as feedback.
                         """.formatted(blogDraft.title(), blogDraft.content()));
         System.out.println(reviewedPost);
+        writeToFile(reviewedPost);
         return reviewedPost;
+    }
+
+//    @AchievesGoal(description = "A reviewed and polished blog post saved to file")
+//    @Action(description = "Save the reviewed post to a file")
+//    public void savePost(ReviewedPost post) {
+//        writeToFile(post);
+//    }
+
+    private void writeToFile(ReviewedPost post) {
+        String filename = post.title()
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-|-$", "")
+                + ".md";
+        Path outputDir = Path.of(properties.outputDir());
+        Path filePath = outputDir.resolve(filename);
+
+        try {
+            Files.createDirectories(outputDir);
+            Files.writeString(filePath, post.content());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }
