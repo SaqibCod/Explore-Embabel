@@ -23,6 +23,7 @@ public class BlogWriterAgent {
         return ai
                 .withDefaultLlm()
                 .withId("blog-post-draft-writer")
+                .withPromptContributor(Personas.WRITER)
                 .creating(BlogDraft.class)
                 .fromPrompt(""" 
                         You are a software developer and educator writing a blog post.
@@ -41,6 +42,7 @@ public class BlogWriterAgent {
 
         ReviewedPost reviewedPost = ai.withLlmByRole("reviewer")
                 .withId("post-reviewer")
+                .withPromptContributor(Personas.REVIEWER)
                 .creating(ReviewedPost.class)
                 .fromPrompt("""
                         You are a technical editor. Review and improve this blog post.
